@@ -24,7 +24,8 @@ public class PriceController {
     public void getEthereumPrices() throws URISyntaxException, IOException, InterruptedException {
         log.info("-- Start Ethereum price retrieval --");
 
-        String result = priceService.getBestEthereum();
+//        String result = priceService.getBestEthereum();
+        String result = priceService.getBestEthereumPrices();
         log.info(result);
 
         log.info("-- End Ethereum price retrieval --");
