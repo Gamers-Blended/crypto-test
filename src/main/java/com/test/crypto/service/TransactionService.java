@@ -46,12 +46,13 @@ public class TransactionService {
         }
 
         String tranasctionId = UUID.randomUUID().toString();
+        MathContext mc = new MathContext(18, RoundingMode.HALF_UP); // 18 precision, round half up
         switch (mode) {
             case BUY -> {
-                return buyCrypto(transactionRequestDTO, tranasctionId);
+                return buyCrypto(transactionRequestDTO, tranasctionId, mc);
             }
             case SELL -> {
-                return sellCrypto(transactionRequestDTO, tranasctionId);
+                return sellCrypto(transactionRequestDTO, tranasctionId, mc);
             }
             default -> {
                 return "Invalid trade action, please only choose " + BUY + " or " + SELL;
@@ -59,7 +60,7 @@ public class TransactionService {
         }
     }
 
-    public String buyCrypto(TransactionRequestDTO transactionRequestDTO, String tranasctionId) {
+    public String buyCrypto(TransactionRequestDTO transactionRequestDTO, String tranasctionId, MathContext mc) {
 
         // check that buy amount is positive
         if (transactionRequestDTO.getAmountInUsdt().compareTo(BigDecimal.ZERO) < 0) {
@@ -85,13 +86,12 @@ public class TransactionService {
         BigDecimal latestAskPrice = latestPricesList.get(0).getAskPrice();
         log.info("Buying {} at {}!", transactionRequestDTO.getCrypto(), latestAskPrice);
 
-        MathContext mc = new MathContext(18, RoundingMode.HALF_UP); // 18 precision, round half up
         BigDecimal amountToBuy = transactionRequestDTO.getAmountInUsdt().divide(latestAskPrice, mc);
         log.info("Amount of {} to add to wallet: {}", transactionRequestDTO.getCrypto(), amountToBuy);
 
         // update wallet
         // reduce USDT balance
-        usdtBalance = usdtBalance.subtract(transactionRequestDTO.getAmountInUsdt());
+        usdtBalance = usdtBalance.subtract(transactionRequestDTO.getAmountInUsdt(), mc);
         // increase bought crypto balance
         BigDecimal newBalance;
         Wallet updatedWallet = new Wallet();
@@ -100,12 +100,12 @@ public class TransactionService {
         updatedWallet.setTransactionId(tranasctionId);
         switch (transactionRequestDTO.getCrypto()) {
             case ETH -> {
-                newBalance = wallet.getEth().add(amountToBuy);
+                newBalance = wallet.getEth().add(amountToBuy, mc);
                 updatedWallet.setEthAmount(newBalance);
                 updatedWallet.setBtcAmount(wallet.getBtc());
             }
             case BTC -> {
-                newBalance = wallet.getBtc().add(amountToBuy);
+                newBalance = wallet.getBtc().add(amountToBuy, mc);
                 updatedWallet.setBtcAmount(newBalance);
                 updatedWallet.setEthAmount(wallet.getEth());
             }
@@ -135,7 +135,7 @@ public class TransactionService {
                 "\n BTC: " + updatedWallet.getBtcAmount().toPlainString();
     }
 
-    public String sellCrypto(TransactionRequestDTO transactionRequestDTO, String tranasctionId) {
+    public String sellCrypto(TransactionRequestDTO transactionRequestDTO, String tranasctionId, MathContext mc) {
 
         String cryptoToSell = transactionRequestDTO.getCrypto();
         // check that sell amount is positive
@@ -166,13 +166,12 @@ public class TransactionService {
         BigDecimal latestBidPrice = latestPricesList.get(0).getBidPrice();
         log.info("Selling {} {} at {}!", transactionRequestDTO.getAmountToSell(), transactionRequestDTO.getCrypto(), latestBidPrice);
 
-        MathContext mc = new MathContext(18, RoundingMode.HALF_UP); // 18 precision, round half up
         BigDecimal usdtAmountToReceive = transactionRequestDTO.getAmountToSell().multiply(latestBidPrice, mc);
         log.info("Amount of USDT to add to wallet: {}", usdtAmountToReceive);
 
         // update wallet
         // increase USDT balance
-        BigDecimal newUsdTBalance = wallet.getUsdt().add(usdtAmountToReceive);
+        BigDecimal newUsdTBalance = wallet.getUsdt().add(usdtAmountToReceive, mc);
         // decrease sold crypto balance
         BigDecimal newBalance;
         Wallet updatedWallet = new Wallet();
@@ -181,12 +180,12 @@ public class TransactionService {
         updatedWallet.setTransactionId(tranasctionId);
         switch (transactionRequestDTO.getCrypto()) {
             case ETH -> {
-                newBalance = wallet.getEth().subtract(amountToSell);
+                newBalance = wallet.getEth().subtract(amountToSell, mc);
                 updatedWallet.setEthAmount(newBalance);
                 updatedWallet.setBtcAmount(wallet.getBtc());
             }
             case BTC -> {
-                newBalance = wallet.getBtc().subtract(amountToSell);
+                newBalance = wallet.getBtc().subtract(amountToSell, mc);
                 updatedWallet.setBtcAmount(newBalance);
                 updatedWallet.setEthAmount(wallet.getEth());
             }
