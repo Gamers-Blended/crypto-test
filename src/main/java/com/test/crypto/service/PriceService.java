@@ -22,6 +22,9 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.test.crypto.constants.CryptoPairConstants.BTCUSDT;
+import static com.test.crypto.constants.CryptoPairConstants.ETHUSDT;
+
 @Slf4j
 @Service
 public class PriceService {
@@ -32,7 +35,7 @@ public class PriceService {
     public List<PriceDTO> getBestPrices(String mode) throws URISyntaxException, IOException, InterruptedException {
 
         List<PriceDTO> priceDTOList = new ArrayList<>();
-        List<String> symbolsToQueryList = List.of("ETHUSDT", "BTCUSDT");
+        List<String> symbolsToQueryList = List.of(ETHUSDT, BTCUSDT);
 
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
@@ -47,8 +50,8 @@ public class PriceService {
             // get only the best prices from the 2 sources
             // buy - lower ask price
             // sell - higher bid price
-            BigDecimal lowerAskPrice = askBidFromBinanceList.get(0).min(askBidFromHoubiList.get(0)).setScale(2, RoundingMode.HALF_UP);
-            BigDecimal higherBidPrice = askBidFromBinanceList.get(1).max(askBidFromHoubiList.get(1)).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal lowerAskPrice = askBidFromBinanceList.get(0).min(askBidFromHoubiList.get(0)).setScale(8, RoundingMode.HALF_UP);
+            BigDecimal higherBidPrice = askBidFromBinanceList.get(1).max(askBidFromHoubiList.get(1)).setScale(8, RoundingMode.HALF_UP);
 
             // for scheduled API, save best prices to database
             if ("auto".equalsIgnoreCase(mode)) {

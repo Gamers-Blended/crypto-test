@@ -19,13 +19,13 @@ public class Wallet {
     @Column(nullable = false)
     private Integer userId;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 18, scale = 8)
     private BigDecimal usdtAmount;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 18, scale = 8)
     private BigDecimal ethAmount;
 
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(nullable = false, precision = 18, scale = 8)
     private BigDecimal btcAmount;
 
     @Column(nullable = false)

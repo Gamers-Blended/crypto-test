@@ -5,9 +5,9 @@ CREATE SCHEMA IF NOT EXISTS crypto;
 CREATE TABLE IF NOT EXISTS crypto.wallet_balance_history (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    usdt_amount DECIMAL(10, 2) NOT NULL,
-    eth_amount DECIMAL(10, 2) NOT NULL,
-    btc_amount DECIMAL(10, 2) NOT NULL,
+    usdt_amount DECIMAL(18, 8) NOT NULL,
+    eth_amount DECIMAL(18, 8) NOT NULL,
+    btc_amount DECIMAL(18, 8) NOT NULL,
     transaction_id VARCHAR NOT NULL);
 
 -- Create table to track user's trading history
@@ -24,6 +24,6 @@ CREATE TABLE IF NOT EXISTS crypto.transactions (
 CREATE TABLE IF NOT EXISTS crypto.prices (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     symbol VARCHAR NOT NULL,
-    bid_price DECIMAL(10, 2) NOT NULL,
-    ask_price DECIMAL(10, 2) NOT NULL,
+    bid_price DECIMAL(18, 8) NOT NULL,
+    ask_price DECIMAL(18, 8) NOT NULL,
     created_at TIMESTAMP NOT NULL);

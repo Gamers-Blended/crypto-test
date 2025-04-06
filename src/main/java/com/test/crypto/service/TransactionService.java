@@ -54,7 +54,7 @@ public class TransactionService {
             return "Insufficient funds to trade, current USDT amount: " + usdtBalance + ", trade amount: " + usdtToTrade;
         }
 
-        // get latest ask price for chosen crypto
+        // get the latest ask price for chosen crypto
         log.info("Buying {} with {} USDT...", transactionRequestDTO.getCrypto(), transactionRequestDTO.getAmountInUsdt());
         List<Prices> latestPricesList = pricesRepository.getLatestPricesForSymbol(transactionRequestDTO.getCrypto());
         if (latestPricesList.isEmpty()) {
@@ -65,7 +65,7 @@ public class TransactionService {
         BigDecimal latestAskPrice = latestPricesList.get(0).getAskPrice();
         log.info("Buying {} at {}!", transactionRequestDTO.getCrypto(), latestAskPrice);
 
-        MathContext mc = new MathContext(10, RoundingMode.HALF_UP); // 10 precision, round half up
+        MathContext mc = new MathContext(18, RoundingMode.HALF_UP); // 18 precision, round half up
         BigDecimal amountToBuy = transactionRequestDTO.getAmountInUsdt().divide(latestAskPrice, mc);
         log.info("Amount of {} to add to wallet: {}", transactionRequestDTO.getCrypto(), amountToBuy);
 
@@ -78,7 +78,6 @@ public class TransactionService {
         switch (transactionRequestDTO.getCrypto()) {
             case ETHUSDT:
                 newBalance = wallet.getEth().add(amountToBuy);
-                log.info("newBalance: {}", newBalance);
                 Wallet updatedWallet = new Wallet();
                 updatedWallet.setUserId(1);
                 updatedWallet.setUsdtAmount(usdtBalance);
