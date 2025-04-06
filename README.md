@@ -46,6 +46,44 @@ This endpoint retrieves the latest wallet balance of the user. <br>
 6 - `/history` [GET] <br>
 This endpoint retrieves the entire trading history of the user. <br>
 
+# Table Structure
+3 tables
+
+#1 `prices`
+
+| Column | Data Type | Description                            |
+| -------- | -------- |----------------------------------------|
+| id   | INTEGER  | primary key                            |
+| symbol | VARCHAR   | symbol of crypto currency pair         |
+| bid_price | DECIMAL(18, 8)   | best bid price of crypto currency pair |
+| ask_price | DECIMAL(18, 8)   | best ask price of crypto currency pair |
+| created_at | TIMESTAMP   | timestamp of prices                    |
+
+#2 `wallet_balance_history`
+
+| Column | Data Type | Description                                                   |
+| -------- | -------- |---------------------------------------------------------------|
+| id   | INTEGER  | primary key                                                   |
+| user_id | INTEGER   | ID of user (only 1)                                           |
+| usdt_amount | DECIMAL(18, 8)   | current amount of USDT in wallet as of transaction_id         |
+| eth_amount | DECIMAL(18, 8)   | current amount of ETH in wallet as of transaction_id                     |
+| btc_amount | DECIMAL(18, 8)   | current amount of BTC in wallet as of transaction_id                              |
+| transaction_id | VARCHAR   | ID of latest transaction, corresponds with transactions table |
+
+
+#3 transactions
+
+| Column | Data Type | Description                                                 |
+| -------- | -------- |-------------------------------------------------------------|
+| transaction_id   | INTEGER  | primary key                                                 |
+| transaction_type   | VARCHAR(6)  | top up, buy or sell transaction                             |
+| user_id | INTEGER   | ID of user (only 1)                                         |
+| crypto_traded | VARCHAR   | The crypto that's been traded in this transaction           |
+| crypto_amount_traded | DECIMAL(18, 8)   | The amount of crypto that's been traded in this transaction |
+| usdt_traded | DECIMAL(18, 8)   | The amount of USDT that's been traded in this transaction   |
+| exchange_rate | DECIMAL(18, 8)   | The ask price (for BUY) and bid price (for SELL) used       |
+| created_at | TIMESTAMP   | timestamp of transaction                                    |
+
 
 # Demo
 During the scheduled task, retrieved prices are logged (API #1).
