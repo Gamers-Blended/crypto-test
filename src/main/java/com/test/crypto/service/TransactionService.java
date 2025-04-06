@@ -3,8 +3,10 @@ package com.test.crypto.service;
 import com.test.crypto.dto.TransactionRequestDTO;
 import com.test.crypto.dto.WalletDTO;
 import com.test.crypto.model.Prices;
+import com.test.crypto.model.Transaction;
 import com.test.crypto.model.Wallet;
 import com.test.crypto.repository.PricesRepository;
+import com.test.crypto.repository.TransactionRepository;
 import com.test.crypto.repository.WalletRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,9 @@ public class TransactionService {
 
     @Autowired
     private WalletRepository walletRepository;
+
+    @Autowired
+    private TransactionRepository transactionRepository;
 
     @Autowired
     private WalletService walletService;
@@ -92,6 +97,18 @@ public class TransactionService {
                 break;
         }
         walletRepository.save(updatedWallet);
+
+        // log transaction in transaction audit table
+        Transaction transaction = new Transaction();
+        transaction.setTransactionId(tranasctionId);
+        transaction.setTransactionType("BUY");
+        transaction.setUserId(1);
+        transaction.setCryptoTraded(transactionRequestDTO.getCrypto());
+        transaction.setCryptoAmountTraded(amountToBuy);
+        transaction.setUsdtTraded(transactionRequestDTO.getAmountInUsdt());
+        transaction.setExchangeRate(latestAskPrice);
+
+        transactionRepository.save(transaction);
 
         return "Transaction completed! Transaction ID: " + tranasctionId +
                 "\n Wallet balance: " +

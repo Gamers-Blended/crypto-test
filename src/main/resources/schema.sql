@@ -13,11 +13,12 @@ CREATE TABLE IF NOT EXISTS crypto.wallet_balance_history (
 -- Create table to track user's trading history
 CREATE TABLE IF NOT EXISTS crypto.transactions (
     transaction_id VARCHAR PRIMARY KEY,
+    transaction_type VARCHAR(6) NOT NULL,
     user_id INTEGER NOT NULL,
-    symbol VARCHAR NOT NULL,
-    side VARCHAR(4) NOT NULL,
-    price DECIMAL NOT NULL,
-    quantity INTEGER NOT NULL,
+    crypto_traded VARCHAR NOT NULL,
+    crypto_amount_traded DECIMAL(18, 8) NOT NULL,
+    usdt_traded DECIMAL(18, 8) NOT NULL,
+    exchange_rate DECIMAL(18, 8) NOT NULL,
     created_at TIMESTAMP NOT NULL);
 
 -- Create table to save best aggregated prices
