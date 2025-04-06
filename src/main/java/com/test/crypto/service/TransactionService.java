@@ -225,4 +225,8 @@ public class TransactionService {
             return "";
         }
     }
+
+    public List<Transaction> getTradingHistory() {
+        return transactionRepository.getTradingHistory();
+    }
 }
