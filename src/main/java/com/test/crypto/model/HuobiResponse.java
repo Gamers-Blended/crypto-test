@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Setter
 public class HuobiResponse {
@@ -24,9 +26,9 @@ public class HuobiResponse {
         private Double amount;
         private Double vol;
         private Integer count;
-        private Double bid;
+        private BigDecimal bid;
         private Double bidSize;
-        private Double ask;
+        private BigDecimal ask;
         private Double askSize;
     }
 }
