@@ -29,6 +29,6 @@ public class Wallet {
     private BigDecimal btcAmount;
 
     @Column(nullable = false)
-    private Integer transactionId;
+    private String transactionId;
 
 }

@@ -5,14 +5,14 @@ CREATE SCHEMA IF NOT EXISTS crypto;
 CREATE TABLE IF NOT EXISTS crypto.wallet_balance_history (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     user_id INTEGER NOT NULL,
-    usdt_amount DECIMAL NOT NULL,
-    eth_amount DECIMAL NOT NULL,
-    btc_amount DECIMAL NOT NULL,
-    transaction_id INTEGER NOT NULL);
+    usdt_amount DECIMAL(10, 2) NOT NULL,
+    eth_amount DECIMAL(10, 2) NOT NULL,
+    btc_amount DECIMAL(10, 2) NOT NULL,
+    transaction_id VARCHAR NOT NULL);
 
 -- Create table to track user's trading history
 CREATE TABLE IF NOT EXISTS crypto.transactions (
-    transaction_id INTEGER PRIMARY KEY,
+    transaction_id VARCHAR PRIMARY KEY,
     user_id INTEGER NOT NULL,
     symbol VARCHAR NOT NULL,
     side VARCHAR(4) NOT NULL,

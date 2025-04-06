@@ -1,14 +1,23 @@
 package com.test.crypto.service;
 
 import com.test.crypto.dto.TransactionRequestDTO;
+import com.test.crypto.dto.WalletDTO;
 import com.test.crypto.model.Prices;
+import com.test.crypto.model.Wallet;
 import com.test.crypto.repository.PricesRepository;
+import com.test.crypto.repository.WalletRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.List;
+import java.util.UUID;
+
+import static com.test.crypto.constants.CryptoPairConstants.BTCUSDT;
+import static com.test.crypto.constants.CryptoPairConstants.ETHUSDT;
 
 @Slf4j
 @Service
@@ -18,9 +27,12 @@ public class TransactionService {
     private PricesRepository pricesRepository;
 
     @Autowired
+    private WalletRepository walletRepository;
+
+    @Autowired
     private WalletService walletService;
 
-    private final List<String> ALLOWED_CRYPTO_LIST = List.of("ETHUSDT", "BTCUSDT");
+    private final List<String> ALLOWED_CRYPTO_LIST = List.of(ETHUSDT, BTCUSDT);
 
     public String buyCrypto(TransactionRequestDTO transactionRequestDTO) {
 
@@ -35,7 +47,8 @@ public class TransactionService {
         }
 
         // check if enough balance after transaction
-        BigDecimal usdtBalance = walletService.getCurrentBalance().getUsdt();
+        WalletDTO wallet = walletService.getCurrentBalance();
+        BigDecimal usdtBalance = wallet.getUsdt();
         BigDecimal usdtToTrade = transactionRequestDTO.getAmountInUsdt();
         if (usdtBalance.compareTo(usdtToTrade) < 0) {
             return "Insufficient funds to trade, current USDT amount: " + usdtBalance + ", trade amount: " + usdtToTrade;
@@ -48,10 +61,38 @@ public class TransactionService {
             return "Unable to retrieve prices from database, please try again...";
         }
 
+        // calculate amount to buy
         BigDecimal latestAskPrice = latestPricesList.get(0).getAskPrice();
+        log.info("Buying {} at {}!", transactionRequestDTO.getCrypto(), latestAskPrice);
+
+        MathContext mc = new MathContext(10, RoundingMode.HALF_UP); // 10 precision, round half up
+        BigDecimal amountToBuy = transactionRequestDTO.getAmountInUsdt().divide(latestAskPrice, mc);
+        log.info("Amount of {} to add to wallet: {}", transactionRequestDTO.getCrypto(), amountToBuy);
+
+        String tranasctionId = UUID.randomUUID().toString();
+        // update wallet
+        // reduce USDT balance
+        usdtBalance = usdtBalance.subtract(transactionRequestDTO.getAmountInUsdt());
+        // increase bought crypto balance
+        BigDecimal newBalance;
+        switch (transactionRequestDTO.getCrypto()) {
+            case ETHUSDT:
+                newBalance = wallet.getEth().add(amountToBuy);
+                log.info("newBalance: {}", newBalance);
+                Wallet updatedWallet = new Wallet();
+                updatedWallet.setUserId(1);
+                updatedWallet.setUsdtAmount(usdtBalance);
+                updatedWallet.setEthAmount(newBalance);
+                updatedWallet.setBtcAmount(wallet.getBtc());
+                updatedWallet.setTransactionId(tranasctionId);
+                walletRepository.save(updatedWallet);
+                break;
+            case BTCUSDT:
+                newBalance = wallet.getBtc().add(amountToBuy);
+                break;
+        }
 
 
-
-        return "Transaction completed! Transaction ID: " + 1;
+        return "Transaction completed! Transaction ID: " + tranasctionId;
     }
 }
