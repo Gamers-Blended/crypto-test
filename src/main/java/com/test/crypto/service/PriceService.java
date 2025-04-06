@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -40,9 +41,10 @@ public class PriceService {
         BigDecimal lowerAskPrice = askBidFromBinanceList.get(0).min(askBidFromHoubiList.get(0));
         BigDecimal higherBidPrice = askBidFromBinanceList.get(1).max(askBidFromHoubiList.get(1));
 
-        // save best price to database
+        // save best prices to database
+        log.info("Saving prices for {}: Bid: {}, Ask: {}", symbolToQuery, higherBidPrice, lowerAskPrice);
         savePrices("ETHUSDT", lowerAskPrice, higherBidPrice);
-        return askBidFromHoubiList.toString();
+        return "Ask: " + lowerAskPrice + ", Bid: " + higherBidPrice;
     }
 
     // returns list [askPrice, bidPrice]
@@ -114,8 +116,8 @@ public class PriceService {
     private void savePrices(String symbol, BigDecimal askPrice, BigDecimal bidPrice) {
         Prices prices = new Prices();
         prices.setSymbol(symbol);
-        prices.setAskPrice(askPrice);
-        prices.setBidPrice(bidPrice);
+        prices.setAskPrice(askPrice.setScale(2, RoundingMode.HALF_UP));
+        prices.setBidPrice(bidPrice.setScale(2, RoundingMode.HALF_UP));
         pricesRepository.save(prices);
     }
 }
