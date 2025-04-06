@@ -24,6 +24,6 @@ CREATE TABLE IF NOT EXISTS crypto.transactions (
 CREATE TABLE IF NOT EXISTS crypto.prices (
     id INTEGER AUTO_INCREMENT PRIMARY KEY,
     symbol VARCHAR NOT NULL,
-    bid_price DECIMAL NOT NULL,
-    ask_price VARCHAR NOT NULL,
+    bid_price DECIMAL(10, 2) NOT NULL,
+    ask_price DECIMAL(10, 2) NOT NULL,
     created_at TIMESTAMP NOT NULL);

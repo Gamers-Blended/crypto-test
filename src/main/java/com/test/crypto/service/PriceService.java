@@ -31,15 +31,19 @@ public class PriceService {
     public String getBestEthereumPrices() throws URISyntaxException, IOException, InterruptedException {
         String symbolToQuery = "ETHUSDT";
 
+        HttpClient client = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
+
         // askBidList is a list with 2 elements: askPrice, bidPrice
-        List<BigDecimal> askBidFromBinanceList = getEthereumPricesFromBinance(symbolToQuery);
-        List<BigDecimal> askBidFromHoubiList = getEthereumPricesFromHuobi(symbolToQuery);
+        List<BigDecimal> askBidFromBinanceList = getPricesFromBinance(symbolToQuery, client);
+        List<BigDecimal> askBidFromHoubiList = getPricesFromHuobi(symbolToQuery, client);
 
         // get only the best prices from the 2 sources
         // buy - lower ask price
         // sell - higher bid price
-        BigDecimal lowerAskPrice = askBidFromBinanceList.get(0).min(askBidFromHoubiList.get(0));
-        BigDecimal higherBidPrice = askBidFromBinanceList.get(1).max(askBidFromHoubiList.get(1));
+        BigDecimal lowerAskPrice = askBidFromBinanceList.get(0).min(askBidFromHoubiList.get(0)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal higherBidPrice = askBidFromBinanceList.get(1).max(askBidFromHoubiList.get(1)).setScale(2, RoundingMode.HALF_UP);
 
         // save best prices to database
         log.info("Saving prices for {}: Bid: {}, Ask: {}", symbolToQuery, higherBidPrice, lowerAskPrice);
@@ -48,13 +52,9 @@ public class PriceService {
     }
 
     // returns list [askPrice, bidPrice]
-    public List<BigDecimal> getEthereumPricesFromBinance(String symbolToQuery) throws URISyntaxException, IOException, InterruptedException {
+    public List<BigDecimal> getPricesFromBinance(String symbolToQuery, HttpClient client) throws URISyntaxException, IOException, InterruptedException {
 
         List<BigDecimal> askBidList = new ArrayList<>();
-
-        HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
-                .build();
 
         // Get prices from Binance API
         HttpRequest request = HttpRequest.newBuilder()
@@ -77,13 +77,10 @@ public class PriceService {
         return askBidList;
     }
 
-    public List<BigDecimal> getEthereumPricesFromHuobi(String symbolToQuery) throws URISyntaxException, IOException, InterruptedException {
+    // returns list [askPrice, bidPrice]
+    public List<BigDecimal> getPricesFromHuobi(String symbolToQuery, HttpClient client) throws URISyntaxException, IOException, InterruptedException {
 
         List<BigDecimal> askBidList = new ArrayList<>();
-
-        HttpClient client = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(10))
-                .build();
 
         // Get prices from Huobi API
         HttpRequest request = HttpRequest.newBuilder()
@@ -116,8 +113,8 @@ public class PriceService {
     private void savePrices(String symbol, BigDecimal askPrice, BigDecimal bidPrice) {
         Prices prices = new Prices();
         prices.setSymbol(symbol);
-        prices.setAskPrice(askPrice.setScale(2, RoundingMode.HALF_UP));
-        prices.setBidPrice(bidPrice.setScale(2, RoundingMode.HALF_UP));
+        prices.setAskPrice(askPrice);
+        prices.setBidPrice(bidPrice);
         pricesRepository.save(prices);
     }
 }
