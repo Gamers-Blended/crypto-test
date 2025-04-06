@@ -38,16 +38,32 @@ public class TransactionService {
 
     private final List<String> ALLOWED_CRYPTO_LIST = List.of(ETH, BTC);
 
-    public String buyCrypto(TransactionRequestDTO transactionRequestDTO) {
+    public String performTrade(TransactionRequestDTO transactionRequestDTO, String mode) {
 
         // check chosen crypto is allowed
         if (!ALLOWED_CRYPTO_LIST.contains(transactionRequestDTO.getCrypto())) {
             return "Unsupported cryptocurrency chosen, please only choose from this list: " + ALLOWED_CRYPTO_LIST;
         }
 
-        // check that trade amount is positive
+        String tranasctionId = UUID.randomUUID().toString();
+        switch (mode) {
+            case BUY -> {
+                return buyCrypto(transactionRequestDTO, tranasctionId);
+            }
+            case SELL -> {
+                return sellCrypto(transactionRequestDTO, tranasctionId);
+            }
+            default -> {
+                return "Invalid trade action, please only choose " + BUY + " or " + SELL;
+            }
+        }
+    }
+
+    public String buyCrypto(TransactionRequestDTO transactionRequestDTO, String tranasctionId) {
+
+        // check that buy amount is positive
         if (transactionRequestDTO.getAmountInUsdt().compareTo(BigDecimal.ZERO) < 0) {
-            return "Amount to trade is invalid, please trade with an amount more than 0";
+            return "Amount to buy is invalid, please buy with an amount more than 0";
         }
 
         // check if enough balance after transaction
@@ -73,7 +89,6 @@ public class TransactionService {
         BigDecimal amountToBuy = transactionRequestDTO.getAmountInUsdt().divide(latestAskPrice, mc);
         log.info("Amount of {} to add to wallet: {}", transactionRequestDTO.getCrypto(), amountToBuy);
 
-        String tranasctionId = UUID.randomUUID().toString();
         // update wallet
         // reduce USDT balance
         usdtBalance = usdtBalance.subtract(transactionRequestDTO.getAmountInUsdt());
@@ -112,15 +127,93 @@ public class TransactionService {
 
         transactionRepository.save(transaction);
 
-        return "Transaction completed! Transaction ID: " + tranasctionId +
+        return "Transaction completed successfully!" +
+                "\n Transaction ID: " + tranasctionId +
                 "\n Wallet balance: " +
                 "\n USDT: " + updatedWallet.getUsdtAmount().toPlainString() +
                 "\n ETH: " + updatedWallet.getEthAmount().toPlainString() +
                 "\n BTC: " + updatedWallet.getBtcAmount().toPlainString();
     }
 
-    public String sellCrypto(TransactionRequestDTO transactionRequestDTO) {
-        return "ok";
+    public String sellCrypto(TransactionRequestDTO transactionRequestDTO, String tranasctionId) {
+
+        String cryptoToSell = transactionRequestDTO.getCrypto();
+        // check that sell amount is positive
+        if (transactionRequestDTO.getAmountToSell().compareTo(BigDecimal.ZERO) < 0) {
+            return "Amount to sell is invalid, please sell at an amount more than 0";
+        }
+
+        // check if enough balance after transaction
+        WalletDTO wallet = walletService.getCurrentBalance();
+        BigDecimal cryptoToSellBalance = new BigDecimal(0);
+        if (ETH.equalsIgnoreCase(cryptoToSell)) {
+            cryptoToSellBalance = wallet.getEth();
+        } else if (BTC.equalsIgnoreCase(cryptoToSell)) {
+            cryptoToSellBalance = wallet.getBtc();
+        }
+        BigDecimal amountToSell = transactionRequestDTO.getAmountToSell();
+        if (cryptoToSellBalance.compareTo(amountToSell) < 0) {
+            return "Insufficient " + cryptoToSell + " to sell, current " + cryptoToSell + " amount: " + cryptoToSellBalance + ", sell amount: " + amountToSell;
+        }
+
+        // get the latest bid price for chosen crypto
+        List<Prices> latestPricesList = pricesRepository.getLatestPricesForSymbol(cryptoConvertToPair(transactionRequestDTO.getCrypto()));
+        if (latestPricesList.isEmpty()) {
+            return "Unable to retrieve prices from database, please try again...";
+        }
+
+        // calculate amount of USDT to receive
+        BigDecimal latestBidPrice = latestPricesList.get(0).getBidPrice();
+        log.info("Selling {} {} at {}!", transactionRequestDTO.getAmountToSell(), transactionRequestDTO.getCrypto(), latestBidPrice);
+
+        MathContext mc = new MathContext(18, RoundingMode.HALF_UP); // 18 precision, round half up
+        BigDecimal usdtAmountToReceive = transactionRequestDTO.getAmountToSell().multiply(latestBidPrice, mc);
+        log.info("Amount of USDT to add to wallet: {}", usdtAmountToReceive);
+
+        // update wallet
+        // increase USDT balance
+        BigDecimal newUsdTBalance = wallet.getUsdt().add(usdtAmountToReceive);
+        // decrease sold crypto balance
+        BigDecimal newBalance;
+        Wallet updatedWallet = new Wallet();
+        updatedWallet.setUserId(1);
+        updatedWallet.setUsdtAmount(newUsdTBalance);
+        updatedWallet.setTransactionId(tranasctionId);
+        switch (transactionRequestDTO.getCrypto()) {
+            case ETH -> {
+                newBalance = wallet.getEth().subtract(amountToSell);
+                updatedWallet.setEthAmount(newBalance);
+                updatedWallet.setBtcAmount(wallet.getBtc());
+            }
+            case BTC -> {
+                newBalance = wallet.getBtc().subtract(amountToSell);
+                updatedWallet.setBtcAmount(newBalance);
+                updatedWallet.setEthAmount(wallet.getEth());
+            }
+            default -> {
+                return "Unsupported cryptocurrency chosen, please only choose from this list: " + ALLOWED_CRYPTO_LIST;
+            }
+        }
+        walletRepository.save(updatedWallet);
+
+        // log transaction in transaction audit table
+        Transaction transaction = new Transaction();
+        transaction.setTransactionId(tranasctionId);
+        transaction.setTransactionType("SELL");
+        transaction.setUserId(1);
+        transaction.setCryptoTraded(transactionRequestDTO.getCrypto());
+        transaction.setCryptoAmountTraded(amountToSell);
+        transaction.setUsdtTraded(usdtAmountToReceive);
+        transaction.setExchangeRate(latestBidPrice);
+
+        transactionRepository.save(transaction);
+
+        return "Transaction completed successfully!" +
+                "\n Transaction ID: " + tranasctionId +
+                "\n Wallet balance: " +
+                "\n USDT: " + updatedWallet.getUsdtAmount().toPlainString() +
+                "\n ETH: " + updatedWallet.getEthAmount().toPlainString() +
+                "\n BTC: " + updatedWallet.getBtcAmount().toPlainString();
     }
 
     // for making queries to prices table

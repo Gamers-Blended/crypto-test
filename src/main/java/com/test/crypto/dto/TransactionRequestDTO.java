@@ -11,4 +11,5 @@ public class TransactionRequestDTO {
 
     private String crypto;
     private BigDecimal amountInUsdt;
+    private BigDecimal amountToSell;
 }
