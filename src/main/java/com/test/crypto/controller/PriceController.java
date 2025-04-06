@@ -1,5 +1,6 @@
 package com.test.crypto.controller;
 
+import com.test.crypto.dto.PriceDTO;
 import com.test.crypto.service.PriceService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.List;
 
 @Slf4j
 @RestController
@@ -24,8 +26,14 @@ public class PriceController {
     public void getBestAggregatedPrices() throws URISyntaxException, IOException, InterruptedException {
         log.info("-- Start price retrieval --");
 
-        priceService.getBestPrices();
+        priceService.getBestPrices("auto");
 
         log.info("-- End price retrieval --");
+    }
+
+    @GetMapping("/prices-manual")
+    public List<PriceDTO> getLatestBestAggregatedPrices() throws URISyntaxException, IOException, InterruptedException {
+
+        return priceService.getBestPrices("manual");
     }
 }

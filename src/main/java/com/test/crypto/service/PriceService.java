@@ -1,6 +1,7 @@
 package com.test.crypto.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.test.crypto.dto.PriceDTO;
 import com.test.crypto.model.BinanceResponse;
 import com.test.crypto.model.HuobiResponse;
 import com.test.crypto.model.Prices;
@@ -28,7 +29,9 @@ public class PriceService {
     @Autowired
     private PricesRepository pricesRepository;
 
-    public String getBestPrices() throws URISyntaxException, IOException, InterruptedException {
+    public List<PriceDTO> getBestPrices(String mode) throws URISyntaxException, IOException, InterruptedException {
+
+        List<PriceDTO> priceDTOList = new ArrayList<>();
         List<String> symbolsToQueryList = List.of("ETHUSDT", "BTCUSDT");
 
         HttpClient client = HttpClient.newBuilder()
@@ -47,12 +50,21 @@ public class PriceService {
             BigDecimal lowerAskPrice = askBidFromBinanceList.get(0).min(askBidFromHoubiList.get(0)).setScale(2, RoundingMode.HALF_UP);
             BigDecimal higherBidPrice = askBidFromBinanceList.get(1).max(askBidFromHoubiList.get(1)).setScale(2, RoundingMode.HALF_UP);
 
-            // save best prices to database
-            log.info("Saving prices for {}: Bid: {}, Ask: {}", symbolToQuery, higherBidPrice, lowerAskPrice);
-            savePrices(symbolToQuery, lowerAskPrice, higherBidPrice);
+            // for scheduled API, save best prices to database
+            if ("auto".equalsIgnoreCase(mode)) {
+                log.info("Saving prices for {}: Bid: {}, Ask: {}", symbolToQuery, higherBidPrice, lowerAskPrice);
+                savePrices(symbolToQuery, lowerAskPrice, higherBidPrice);
+            }
+
+            // for manual API, return result
+            PriceDTO priceDTO = new PriceDTO();
+            priceDTO.setSymbol(symbolToQuery);
+            priceDTO.setAskPrice(lowerAskPrice);
+            priceDTO.setBidPrice(higherBidPrice);
+            priceDTOList.add(priceDTO);
         }
 
-        return "Done";
+        return priceDTOList;
     }
 
     // returns list [askPrice, bidPrice]
