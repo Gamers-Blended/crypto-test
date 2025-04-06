@@ -75,23 +75,28 @@ public class TransactionService {
         usdtBalance = usdtBalance.subtract(transactionRequestDTO.getAmountInUsdt());
         // increase bought crypto balance
         BigDecimal newBalance;
+        Wallet updatedWallet = new Wallet();
+        updatedWallet.setUserId(1);
+        updatedWallet.setUsdtAmount(usdtBalance);
+        updatedWallet.setTransactionId(tranasctionId);
         switch (transactionRequestDTO.getCrypto()) {
             case ETHUSDT:
                 newBalance = wallet.getEth().add(amountToBuy);
-                Wallet updatedWallet = new Wallet();
-                updatedWallet.setUserId(1);
-                updatedWallet.setUsdtAmount(usdtBalance);
                 updatedWallet.setEthAmount(newBalance);
                 updatedWallet.setBtcAmount(wallet.getBtc());
-                updatedWallet.setTransactionId(tranasctionId);
-                walletRepository.save(updatedWallet);
                 break;
             case BTCUSDT:
                 newBalance = wallet.getBtc().add(amountToBuy);
+                updatedWallet.setBtcAmount(newBalance);
+                updatedWallet.setEthAmount(wallet.getEth());
                 break;
         }
+        walletRepository.save(updatedWallet);
 
-
-        return "Transaction completed! Transaction ID: " + tranasctionId;
+        return "Transaction completed! Transaction ID: " + tranasctionId +
+                "\n Wallet balance: " +
+                "\n USDT: " + updatedWallet.getUsdtAmount().toPlainString() +
+                "\n ETH: " + updatedWallet.getEthAmount().toPlainString() +
+                "\n BTC: " + updatedWallet.getBtcAmount().toPlainString();
     }
 }
