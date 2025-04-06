@@ -28,27 +28,31 @@ public class PriceService {
     @Autowired
     private PricesRepository pricesRepository;
 
-    public String getBestEthereumPrices() throws URISyntaxException, IOException, InterruptedException {
-        String symbolToQuery = "ETHUSDT";
+    public String getBestPrices() throws URISyntaxException, IOException, InterruptedException {
+        List<String> symbolsToQueryList = List.of("ETHUSDT", "BTCUSDT");
 
         HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
 
-        // askBidList is a list with 2 elements: askPrice, bidPrice
-        List<BigDecimal> askBidFromBinanceList = getPricesFromBinance(symbolToQuery, client);
-        List<BigDecimal> askBidFromHoubiList = getPricesFromHuobi(symbolToQuery, client);
+        for (String symbolToQuery: symbolsToQueryList) {
+            log.info("Processing {}", symbolToQuery);
+            // askBidList is a list with 2 elements: askPrice, bidPrice
+            List<BigDecimal> askBidFromBinanceList = getPricesFromBinance(symbolToQuery, client);
+            List<BigDecimal> askBidFromHoubiList = getPricesFromHuobi(symbolToQuery, client);
 
-        // get only the best prices from the 2 sources
-        // buy - lower ask price
-        // sell - higher bid price
-        BigDecimal lowerAskPrice = askBidFromBinanceList.get(0).min(askBidFromHoubiList.get(0)).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal higherBidPrice = askBidFromBinanceList.get(1).max(askBidFromHoubiList.get(1)).setScale(2, RoundingMode.HALF_UP);
+            // get only the best prices from the 2 sources
+            // buy - lower ask price
+            // sell - higher bid price
+            BigDecimal lowerAskPrice = askBidFromBinanceList.get(0).min(askBidFromHoubiList.get(0)).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal higherBidPrice = askBidFromBinanceList.get(1).max(askBidFromHoubiList.get(1)).setScale(2, RoundingMode.HALF_UP);
 
-        // save best prices to database
-        log.info("Saving prices for {}: Bid: {}, Ask: {}", symbolToQuery, higherBidPrice, lowerAskPrice);
-        savePrices("ETHUSDT", lowerAskPrice, higherBidPrice);
-        return "Ask: " + lowerAskPrice + ", Bid: " + higherBidPrice;
+            // save best prices to database
+            log.info("Saving prices for {}: Bid: {}, Ask: {}", symbolToQuery, higherBidPrice, lowerAskPrice);
+            savePrices(symbolToQuery, lowerAskPrice, higherBidPrice);
+        }
+
+        return "Done";
     }
 
     // returns list [askPrice, bidPrice]

@@ -20,13 +20,12 @@ public class PriceController {
     private PriceService priceService;
 
     @Scheduled(fixedDelay = 10000) // 10 seconds in milliseconds
-    @GetMapping("/ethereum")
-    public void getEthereumPrices() throws URISyntaxException, IOException, InterruptedException {
-        log.info("-- Start Ethereum price retrieval --");
+    @GetMapping("/prices")
+    public void getBestAggregatedPrices() throws URISyntaxException, IOException, InterruptedException {
+        log.info("-- Start price retrieval --");
 
-        String result = priceService.getBestEthereumPrices();
-        log.info(result);
+        priceService.getBestPrices();
 
-        log.info("-- End Ethereum price retrieval --");
+        log.info("-- End price retrieval --");
     }
 }
