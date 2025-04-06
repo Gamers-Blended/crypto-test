@@ -18,8 +18,7 @@ import java.math.RoundingMode;
 import java.util.List;
 import java.util.UUID;
 
-import static com.test.crypto.constants.CryptoPairConstants.BTCUSDT;
-import static com.test.crypto.constants.CryptoPairConstants.ETHUSDT;
+import static com.test.crypto.constants.CryptoConstants.*;
 
 @Slf4j
 @Service
@@ -37,13 +36,13 @@ public class TransactionService {
     @Autowired
     private WalletService walletService;
 
-    private final List<String> ALLOWED_CRYPTO_LIST = List.of(ETHUSDT, BTCUSDT);
+    private final List<String> ALLOWED_CRYPTO_LIST = List.of(ETH, BTC);
 
     public String buyCrypto(TransactionRequestDTO transactionRequestDTO) {
 
         // check chosen crypto is allowed
         if (!ALLOWED_CRYPTO_LIST.contains(transactionRequestDTO.getCrypto())) {
-            return "Supported cryptocurrency chosen, please only choose from this list: " + ALLOWED_CRYPTO_LIST;
+            return "Unsupported cryptocurrency chosen, please only choose from this list: " + ALLOWED_CRYPTO_LIST;
         }
 
         // check that trade amount is positive
@@ -61,7 +60,7 @@ public class TransactionService {
 
         // get the latest ask price for chosen crypto
         log.info("Buying {} with {} USDT...", transactionRequestDTO.getCrypto(), transactionRequestDTO.getAmountInUsdt());
-        List<Prices> latestPricesList = pricesRepository.getLatestPricesForSymbol(transactionRequestDTO.getCrypto());
+        List<Prices> latestPricesList = pricesRepository.getLatestPricesForSymbol(cryptoConvertToPair(transactionRequestDTO.getCrypto()));
         if (latestPricesList.isEmpty()) {
             return "Unable to retrieve prices from database, please try again...";
         }
@@ -85,16 +84,19 @@ public class TransactionService {
         updatedWallet.setUsdtAmount(usdtBalance);
         updatedWallet.setTransactionId(tranasctionId);
         switch (transactionRequestDTO.getCrypto()) {
-            case ETHUSDT:
+            case ETH -> {
                 newBalance = wallet.getEth().add(amountToBuy);
                 updatedWallet.setEthAmount(newBalance);
                 updatedWallet.setBtcAmount(wallet.getBtc());
-                break;
-            case BTCUSDT:
+            }
+            case BTC -> {
                 newBalance = wallet.getBtc().add(amountToBuy);
                 updatedWallet.setBtcAmount(newBalance);
                 updatedWallet.setEthAmount(wallet.getEth());
-                break;
+            }
+            default -> {
+                return "Unsupported cryptocurrency chosen, please only choose from this list: " + ALLOWED_CRYPTO_LIST;
+            }
         }
         walletRepository.save(updatedWallet);
 
@@ -115,5 +117,20 @@ public class TransactionService {
                 "\n USDT: " + updatedWallet.getUsdtAmount().toPlainString() +
                 "\n ETH: " + updatedWallet.getEthAmount().toPlainString() +
                 "\n BTC: " + updatedWallet.getBtcAmount().toPlainString();
+    }
+
+    public String sellCrypto(TransactionRequestDTO transactionRequestDTO) {
+        return "ok";
+    }
+
+    // for making queries to prices table
+    private String cryptoConvertToPair(String cryptoSymbol) {
+        if (ETH.equalsIgnoreCase(cryptoSymbol)) {
+            return ETHUSDT;
+        } else if (BTC.equalsIgnoreCase(cryptoSymbol)) {
+            return  BTCUSDT;
+        } else {
+            return "";
+        }
     }
 }

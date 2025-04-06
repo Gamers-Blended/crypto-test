@@ -22,8 +22,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.test.crypto.constants.CryptoPairConstants.BTCUSDT;
-import static com.test.crypto.constants.CryptoPairConstants.ETHUSDT;
+import static com.test.crypto.constants.CryptoConstants.BTCUSDT;
+import static com.test.crypto.constants.CryptoConstants.ETHUSDT;
 
 @Slf4j
 @Service

@@ -9,8 +9,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
-
 @Slf4j
 @RestController
 @RequestMapping("crypto/api/v1")
@@ -22,5 +20,10 @@ public class TransactionController {
     @PostMapping("/trade/buy")
     public String buyCrypto(@RequestBody TransactionRequestDTO transactionRequestDTO) {
         return transactionService.buyCrypto(transactionRequestDTO);
+    }
+
+    @PostMapping("/trade/sell")
+    public String sellCrypto(@RequestBody TransactionRequestDTO transactionRequestDTO) {
+        return transactionService.sellCrypto(transactionRequestDTO);
     }
 }
