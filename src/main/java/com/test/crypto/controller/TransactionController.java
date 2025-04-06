@@ -20,7 +20,7 @@ public class TransactionController {
     private TransactionService transactionService;
 
     @PostMapping("/trade/buy")
-    public BigDecimal buyCrypto(@RequestBody TransactionRequestDTO transactionRequestDTO) {
+    public String buyCrypto(@RequestBody TransactionRequestDTO transactionRequestDTO) {
         return transactionService.buyCrypto(transactionRequestDTO);
     }
 }
